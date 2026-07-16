@@ -1,0 +1,653 @@
+vim.g.mapleader = " "
+
+local opt = vim.opt
+
+opt.number = true
+opt.relativenumber = true
+
+opt.tabstop = 2
+opt.shiftwidth = 2
+opt.expandtab = true
+opt.smartindent = true
+
+opt.wrap = false
+opt.scrolloff = 8
+opt.sidescrolloff = 8
+
+opt.termguicolors = true
+opt.signcolumn = "yes"
+
+opt.clipboard = "unnamedplus"
+
+opt.ignorecase = true
+opt.smartcase = true
+
+opt.splitright = true
+opt.splitbelow = true
+
+opt.updatetime = 250
+opt.timeoutlen = 300
+
+opt.autoindent = true
+opt.smartindent = true
+opt.cindent = true
+
+-- LAZY.NVIM BOOTSTRAP
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+
+if not vim.loop.fs_stat(lazypath) then
+	vim.fn.system({
+		"git",
+		"clone",
+		"--filter=blob:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable",
+		lazypath,
+	})
+end
+
+vim.opt.rtp:prepend(lazypath)
+
+-- PLUGINS
+require("lazy").setup({
+
+	-- THEME
+	{
+		"catppuccin/nvim",
+		name = "catppuccin",
+		priority = 1000,
+
+		config = function()
+			require("catppuccin").setup({
+				flavour = "frappe",
+
+				integrations = {
+					cmp = true,
+					treesitter = true,
+					telescope = true,
+					neo_tree = true,
+					mason = true,
+				},
+			})
+
+			vim.cmd.colorscheme("catppuccin")
+		end,
+	},
+
+	-- FILE EXPLORER
+	{
+		"nvim-neo-tree/neo-tree.nvim",
+		branch = "v3.x",
+
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"MunifTanjim/nui.nvim",
+			"nvim-tree/nvim-web-devicons",
+		},
+
+		keys = {
+			{ "<leader>e", "<cmd>Neotree toggle<cr>", desc = "NeoTree Toggle" },
+			{ "<leader>o", "<cmd>Neotree reveal<cr>", desc = "Reveal File" },
+		},
+
+		opts = {
+			close_if_last_window = true,
+
+			filesystem = {
+				follow_current_file = { enabled = true },
+				filtered_items = {
+					hide_dotfiles = false,
+					hide_gitignored = true,
+				},
+				use_libuv_file_watcher = false,
+			},
+
+			window = {
+				position = "float",
+				width = 30,
+			},
+		},
+	},
+
+	-- TELESCOPE
+	{
+		"nvim-telescope/telescope.nvim",
+		tag = "0.1.8",
+
+		dependencies = { "nvim-lua/plenary.nvim" },
+
+		keys = {
+			{ "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
+			{ "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
+			{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+			{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help Tags" },
+		},
+
+		config = function()
+			require("telescope").setup({
+				defaults = {
+					file_ignore_patterns = { "node_modules", ".git" },
+				},
+			})
+		end,
+	},
+
+	-- TREESITTER + TEXTOBJECTS (digabung dalam satu block)
+	{
+		"nvim-treesitter/nvim-treesitter",
+		build = ":TSUpdate",
+
+		dependencies = {
+			-- textobjects harus jadi dependency treesitter, bukan plugin terpisah
+			"nvim-treesitter/nvim-treesitter-textobjects",
+		},
+
+		event = { "BufReadPost", "BufNewFile" },
+
+		config = function()
+			local ok, configs = pcall(require, "nvim-treesitter.configs")
+
+			if not ok then
+				return
+			end
+
+			configs.setup({
+				ensure_installed = {
+					"lua",
+					"vim",
+					"vimdoc",
+					"query",
+					"python",
+					"javascript",
+					"typescript",
+					"html",
+					"css",
+					"json",
+					"bash",
+					"markdown",
+					"markdown_inline",
+					"rust",
+				},
+
+				sync_install = false,
+				auto_install = true,
+
+				highlight = { enable = true },
+				indent = { enable = true },
+
+				-- TEXTOBJECTS — konfigurasi di sini, bukan di plugin terpisah
+				textobjects = {
+					select = {
+						enable = true,
+						lookahead = true,
+						keymaps = {
+							["af"] = "@function.outer",
+							["if"] = "@function.inner",
+							["ac"] = "@class.outer",
+							["ic"] = "@class.inner",
+							["aa"] = "@parameter.outer",
+							["ia"] = "@parameter.inner",
+							["ab"] = "@block.outer",
+							["ib"] = "@block.inner",
+						},
+					},
+
+					move = {
+						enable = true,
+						set_jumps = true,
+						goto_next_start = { ["]f"] = "@function.outer", ["]c"] = "@class.outer" },
+						goto_next_end = { ["]F"] = "@function.outer", ["]C"] = "@class.outer" },
+						goto_previous_start = { ["[f"] = "@function.outer", ["[c"] = "@class.outer" },
+						goto_previous_end = { ["[F"] = "@function.outer", ["[C"] = "@class.outer" },
+					},
+
+					swap = {
+						enable = true,
+						swap_next = { ["<leader>sn"] = "@parameter.inner" },
+						swap_previous = { ["<leader>sp"] = "@parameter.inner" },
+					},
+				},
+			})
+		end,
+	},
+
+	-- MASON + LSP
+	{
+		"williamboman/mason.nvim",
+
+		dependencies = {
+			"williamboman/mason-lspconfig.nvim",
+			"neovim/nvim-lspconfig",
+		},
+
+		config = function()
+			require("mason").setup()
+
+			local lspconfig = require("lspconfig")
+			local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+			require("mason-lspconfig").setup({
+				ensure_installed = { "lua_ls", "pyright", "rust_analyzer", "ts_ls" },
+
+				handlers = {
+					function(server_name)
+						lspconfig[server_name].setup({ capabilities = capabilities })
+					end,
+
+					["lua_ls"] = function()
+						lspconfig.lua_ls.setup({
+							capabilities = capabilities,
+
+							settings = {
+								Lua = {
+									runtime = {
+										version = "LuaJIT",
+									},
+
+									diagnostics = {
+										globals = { "vim" },
+									},
+
+									workspace = {
+										library = vim.api.nvim_get_runtime_file("", true),
+										checkThirdParty = false,
+									},
+
+									telemetry = {
+										enable = false,
+									},
+								},
+							},
+						})
+					end,
+				},
+			})
+		end,
+	},
+
+	-- AUTOCOMPLETE
+	{
+		"hrsh7th/nvim-cmp",
+
+		dependencies = {
+			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-buffer",
+			"hrsh7th/cmp-path",
+			"L3MON4D3/LuaSnip",
+		},
+
+		config = function()
+			local cmp = require("cmp")
+
+			cmp.setup({
+				snippet = {
+					expand = function(args)
+						require("luasnip").lsp_expand(args.body)
+					end,
+				},
+
+				mapping = cmp.mapping.preset.insert({
+					["<C-b>"] = cmp.mapping.scroll_docs(-4),
+					["<C-f>"] = cmp.mapping.scroll_docs(4),
+					["<C-Space>"] = cmp.mapping.complete(),
+					["<CR>"] = cmp.mapping.confirm({ select = true }),
+					["<Tab>"] = cmp.mapping.select_next_item(),
+					["<S-Tab>"] = cmp.mapping.select_prev_item(),
+				}),
+
+				sources = cmp.config.sources({
+					{ name = "nvim_lsp" },
+					{ name = "buffer" },
+					{ name = "path" },
+					{ name = "luasnip" },
+				}),
+			})
+		end,
+	},
+
+	-- GITSIGNS
+	{
+		"lewis6991/gitsigns.nvim",
+		config = function()
+			require("gitsigns").setup()
+		end,
+	},
+
+	-- LAZYGIT
+	{
+		"kdheepak/lazygit.nvim",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		keys = {
+			{ "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
+		},
+	},
+
+	-- INDENT LINE
+	{
+		"lukas-reineke/indent-blankline.nvim",
+		main = "ibl",
+		opts = { indent = { char = "│" } },
+	},
+
+	-- TROUBLE
+	{
+		"folke/trouble.nvim",
+		opts = {},
+		cmd = "Trouble",
+		keys = {
+			{
+				"<leader>xx",
+				"<cmd>Trouble diagnostics toggle<cr>",
+				desc = "Diagnostics (Trouble)",
+			},
+			{
+				"<leader>xX",
+				"<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+				desc = "Buffer Diagnostics (Trouble)",
+			},
+			{ "<leader>cs", "<cmd>Trouble symbols toggle focus=false<cr>", desc = "Symbols (Trouble)" },
+			{
+				"<leader>cl",
+				"<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+				desc = "LSP Definitions / references",
+			},
+			{
+				"<leader>xL",
+				"<cmd>Trouble loclist toggle<cr>",
+				desc = "Location List (Trouble)",
+			},
+			{
+				"<leader>xQ",
+				"<cmd>Trouble qflist toggle<cr>",
+				desc = "Quickfix List (Trouble)",
+			},
+		},
+	},
+
+	-- MARKDOWN PREVIEW (browser)
+	{
+		"iamcco/markdown-preview.nvim",
+		cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+		ft = { "markdown" },
+		build = function()
+			vim.fn["mkdp#util#install"]()
+		end,
+	},
+
+	-- DISCORD RPC
+	{
+		"IogaMaster/neocord",
+		event = "VeryLazy",
+		config = function()
+			require("neocord").setup({
+				logo = "auto",
+				workspace_text = "Coding",
+				buttons = {
+					{ label = "GitHub", url = "https://github.com/jaweed3" },
+				},
+			})
+		end,
+	},
+
+	-- AUTO CLOSING BRACKETS
+	{
+		"windwp/nvim-autopairs",
+		event = "InsertEnter",
+		config = function()
+			require("nvim-autopairs").setup()
+		end,
+	},
+
+	-- ============================================================
+	-- NEW PLUGINS
+	-- ============================================================
+
+	-- STATUSLINE
+	{
+		"nvim-lualine/lualine.nvim",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
+		config = function()
+			require("lualine").setup({
+				options = {
+					theme = "nord",
+					component_separators = { left = "", right = "" },
+					section_separators = { left = "", right = "" },
+					globalstatus = true,
+				},
+				sections = {
+					lualine_a = { "mode" },
+					lualine_b = { "branch", "diff", "diagnostics" },
+					lualine_c = { { "filename", path = 1 } },
+					lualine_x = { "encoding", "filetype" },
+					lualine_y = { "progress" },
+					lualine_z = { "location" },
+				},
+			})
+		end,
+	},
+
+	-- COMMENT
+	{
+		"numToStr/Comment.nvim",
+		event = "BufReadPost",
+		config = function()
+			require("Comment").setup()
+			-- gcc        → toggle current line
+			-- gc<motion> → toggle region  (e.g. gcip)
+			-- gbc        → block comment current line
+			-- Visual gc / gb
+		end,
+	},
+
+	-- SURROUND
+	{
+		"kylechui/nvim-surround",
+		event = "BufReadPost",
+		config = function()
+			require("nvim-surround").setup()
+			-- ysiw"  → wrap word with "
+			-- cs"'   → change " to '
+			-- ds"    → delete surrounding "
+		end,
+	},
+
+	-- TODO COMMENTS
+	{
+		"folke/todo-comments.nvim",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		event = "BufReadPost",
+		config = function()
+			require("todo-comments").setup({
+				signs = true,
+				keywords = {
+					FIX = { icon = " ", color = "error", alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
+					TODO = { icon = " ", color = "info" },
+					HACK = { icon = " ", color = "warning" },
+					WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+					PERF = { icon = "󰅒 ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
+					NOTE = { icon = "󰍨 ", color = "hint", alt = { "INFO" } },
+				},
+			})
+		end,
+		keys = {
+			{ "<leader>ft", "<cmd>TodoTelescope<cr>", desc = "Find TODOs" },
+			{
+				"]t",
+				function()
+					require("todo-comments").jump_next()
+				end,
+				desc = "Next TODO",
+			},
+			{
+				"[t",
+				function()
+					require("todo-comments").jump_prev()
+				end,
+				desc = "Prev TODO",
+			},
+		},
+	},
+
+	-- RENDER MARKDOWN (in-buffer, bukan browser)
+	{
+		"MeanderingProgrammer/render-markdown.nvim",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+			"nvim-tree/nvim-web-devicons",
+		},
+		ft = { "markdown" },
+		config = function()
+			require("render-markdown").setup({
+				enabled = true,
+				render_modes = { "n", "c" },
+				heading = {
+					enabled = true,
+					sign = true,
+					icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+				},
+				code = {
+					enabled = true,
+					sign = false,
+					style = "full",
+					border = "thin",
+				},
+				bullet = {
+					enabled = true,
+					icons = { "●", "○", "◆", "◇" },
+				},
+			})
+		end,
+	},
+
+	-- FORMATTER
+	{
+		"stevearc/conform.nvim",
+		event = "BufWritePre",
+		config = function()
+			require("conform").setup({
+				formatters_by_ft = {
+					python = { "ruff_format" },
+					rust = { "rustfmt" },
+					lua = { "stylua" },
+					javascript = { "prettier" },
+					typescript = { "prettier" },
+					json = { "prettier" },
+					markdown = { "prettier" },
+				},
+				format_on_save = {
+					timeout_ms = 500,
+					lsp_fallback = true,
+				},
+			})
+		end,
+	},
+
+	{
+		"nvimdev/lspsaga.nvim",
+		config = function()
+			require("lspsaga").setup({})
+		end,
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter", -- optional
+			"nvim-tree/nvim-web-devicons", -- optional
+		},
+	},
+
+	-- WHICH-KEY
+	{
+		"folke/which-key.nvim",
+		event = "VeryLazy",
+		config = function()
+			local wk = require("which-key")
+			wk.setup({ delay = 300 })
+			wk.add({
+				{ "<leader>f", group = "Find (Telescope)" },
+				{ "<leader>l", group = "LazyGit" },
+				{ "<leader>x", group = "Diagnostics" },
+				{ "<leader>c", group = "Code" },
+				{ "<leader>s", group = "Swap" },
+				{ "<leader>1", desc = "Harpoon: File 1" },
+				{ "<leader>2", desc = "Harpoon: File 2" },
+				{ "<leader>3", desc = "Harpoon: File 3" },
+				{ "<leader>4", desc = "Harpoon: File 4" },
+				{ "<leader>a", desc = "Harpoon: Add file" },
+				{ "<leader>u", desc = "Undotree Toggle" },
+			})
+		end,
+	},
+
+	-- HARPOON (quick file navigation — Prime-style)
+	{
+		"ThePrimeagen/harpoon",
+		branch = "harpoon2",
+		config = function()
+			require("harpoon").setup({})
+		end,
+	},
+
+	-- UNDOTREE (visual undo history)
+	{
+		"mbbill/undotree",
+		keys = {
+			{ "<leader>u", "<cmd>UndotreeToggle<cr>", desc = "Undotree Toggle" },
+		},
+	},
+
+	-- VIM-ILLUMINATE (highlight word under cursor)
+	{
+		"RRethy/vim-illuminate",
+		lazy = false,
+	},
+
+	-- VIM-TMUX-NAVIGATOR (seamless nvim split ⇄ tmux pane)
+	{
+		"christoomey/vim-tmux-navigator",
+		event = "VeryLazy",
+	},
+
+}, {
+	install = { colorscheme = { "catppuccin" } },
+	checker = { enabled = true },
+})
+
+-- KEYMAPS
+
+local keymap = vim.keymap.set
+
+-- Save / Quit
+keymap("n", "<leader>w", ":w<CR>")
+keymap("n", "<leader>q", ":q<CR>")
+
+-- Window navigation (by vim-tmux-navigator)
+
+-- Harpoon: quick file marks
+keymap("n", "<leader>a", function()
+	require("harpoon"):list():add()
+end, { desc = "Harpoon: Add file" })
+keymap("n", "<C-e>", function()
+	require("harpoon").ui:toggle_quick_menu(require("harpoon"):list())
+end, { desc = "Harpoon: Menu" })
+keymap("n", "<leader>1", function()
+	require("harpoon"):list():select(1)
+end, { desc = "Harpoon: File 1" })
+keymap("n", "<leader>2", function()
+	require("harpoon"):list():select(2)
+end, { desc = "Harpoon: File 2" })
+keymap("n", "<leader>3", function()
+	require("harpoon"):list():select(3)
+end, { desc = "Harpoon: File 3" })
+keymap("n", "<leader>4", function()
+	require("harpoon"):list():select(4)
+end, { desc = "Harpoon: File 4" })
+
+-- Clear search highlight
+keymap("n", "<Esc>", ":nohlsearch<CR>")
+
+-- AUTOCMDS
+
+vim.api.nvim_create_autocmd("TextYankPost", {
+	callback = function()
+		vim.highlight.on_yank()
+	end,
+})
