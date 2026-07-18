@@ -1,0 +1,35 @@
+export ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
+#export ANTHROPIC_AUTH_TOKEN=<your-token>
+#export AGENT_ROUTER_TOKEN=<your-token>
+#export NARA_ROUTER_TOKEN=<your-token>
+#export NVIDIA_API_KEY=<your-token>
+export ANTHROPIC_MODEL=deepseek-v4-pro
+export ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v3.2
+export ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v3.2
+
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash
+export CLAUDE_CODE_SUBAGENT_MODEL=deepseek-v4-flash
+
+export CLAUDE_CODE_EFFORT_LEVEL=max
+export PATH="$HOME/.local/bin:$PATH"
+
+# opencode
+export PATH=$HOME/.opencode/bin:$PATH
+
+alias lg="lazygit"
+alias gd="gh dash"
+alias gs="git status"
+alias rst="source $HOME/.zshrc"
+
+# bun
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# grok
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+
+# venv
+alias venv="source .venv/bin/activate"
