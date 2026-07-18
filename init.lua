@@ -24,3 +24,6 @@ require("lazy").setup("plugins", {
 -- Settings & keymaps
 require("options")
 require("keymaps")
+
+-- Filetype detection
+vim.filetype.add({ extension = { blade = 'blade' } })
