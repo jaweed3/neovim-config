@@ -67,36 +67,7 @@ return {
     end,
   },
 
-  -- RENDER MARKDOWN (in-buffer)
-  {
-    "MeanderingProgrammer/render-markdown.nvim",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "nvim-tree/nvim-web-devicons",
-    },
-    ft = { "markdown" },
-    config = function()
-      require("render-markdown").setup({
-        enabled = true,
-        render_modes = { "n", "c" },
-        heading = {
-          enabled = true,
-          sign = true,
-          icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
-        },
-        code = {
-          enabled = true,
-          sign = false,
-          style = "full",
-          border = "thin",
-        },
-        bullet = {
-          enabled = true,
-          icons = { "●", "○", "◆", "◇" },
-        },
-      })
-    end,
-  },
+
 
   -- TMUX NAVIGATOR (seamless nvim ⇄ tmux)
   {

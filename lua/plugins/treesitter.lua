@@ -36,20 +36,17 @@ return {
 					"python",
 					"javascript",
 					"typescript",
+					"tsx",
 					"html",
 					"css",
 					"json",
-					"javascriptreact",
-					"typescriptreact",
 					"bash",
-					"markdown",
-					"markdown_inline",
 					"rust",
 					"php",
 					"blade",
 				},
-				sync_install = true,
-				auto_install = true,
+				sync_install = false,
+				auto_install = false,
 				highlight = { enable = true },
 				indent = { enable = true },
 
@@ -90,6 +87,12 @@ return {
 				enable = true,
 				max_lines = 3,
 				multiline_threshold = 2,
+				-- Skip markdown to avoid system tree-sitter-markdown nil-node crash
+				on_attach = function(bufnr)
+					if vim.bo[bufnr].filetype == "markdown" then
+						return false
+					end
+				end,
 			})
 		end,
 	},
