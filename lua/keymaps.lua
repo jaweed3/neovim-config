@@ -24,6 +24,18 @@ keymap("n", "<leader>fw", function()
   require("telescope.builtin").grep_string({ search = vim.fn.expand("<cword>") })
 end, { desc = "Grep word" })
 
+-- ── LaTeX (texlab builds via tectonic on save; this previews) ──
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "tex",
+  callback = function(ev)
+    keymap("n", "<leader>lv", function()
+      vim.lsp.buf_request(ev.buf, "textDocument/forwardSearch", {
+        textDocument = { uri = vim.uri_from_bufnr(ev.buf) },
+        position = vim.lsp.util.make_position_params().position,
+      }, function() end)
+    end, { buffer = ev.buf, desc = "LaTeX view PDF" })
+  end,
+})
 -- ── Autocmd ────────────────────────────────────
 vim.api.nvim_create_autocmd("TextYankPost", {
   callback = function()

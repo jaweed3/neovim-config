@@ -34,9 +34,13 @@ return {
     event = "BufWritePre",
     config = function()
       require("conform").setup({
+        formatters = {
+          gofumpt = { command = vim.fn.expand("~/go/bin/gofumpt") },
+        },
         formatters_by_ft = {
           python = { "ruff_format" },
           rust = { "rustfmt" },
+          go = { "gofumpt" },
           lua = { "stylua" },
           javascript = { "prettier" },
           typescript = { "prettier" },

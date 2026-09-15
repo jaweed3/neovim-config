@@ -7,79 +7,22 @@ return {
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter-textobjects",
 			"nvim-treesitter/nvim-treesitter-context",
-			"EmranMR/tree-sitter-blade",
 		},
 		lazy = false,
 		config = function()
-			local ok, configs = pcall(require, "nvim-treesitter.configs")
-			if not ok then
-				return
-			end
+			-- nvim-treesitter stores queries in runtime/queries/ (not queries/)
+			vim.opt.rtp:append(vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/runtime")
 
-			-- Register blade parser from EmranMR/tree-sitter-blade
-			local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-			parser_config.blade = {
-				install_info = {
-					url = "https://github.com/EmranMR/tree-sitter-blade",
-					files = { "src/parser.c" },
-					branch = "main",
-				},
-				filetype = "blade",
-			}
+			-- Modern nvim-treesitter (main): highlight/indent/ensure_installed are
+			-- gone from config.setup — highlighting is core Neovim now.
+			require("nvim-treesitter").setup()
 
-			configs.setup({
-				ensure_installed = {
-					"lua",
-					"vim",
-					"vimdoc",
-					"query",
-					"python",
-					"javascript",
-					"typescript",
-					"tsx",
-					"html",
-					"css",
-					"json",
-					"bash",
-					"rust",
-					"php",
-					"blade",
-				},
-				sync_install = false,
-				auto_install = false,
-				highlight = { enable = true },
-				indent = { enable = true },
-
-				-- Textobjects
-				textobjects = {
-					select = {
-						enable = true,
-						lookahead = true,
-						keymaps = {
-							["af"] = "@function.outer",
-							["if"] = "@function.inner",
-							["ac"] = "@class.outer",
-							["ic"] = "@class.inner",
-							["aa"] = "@parameter.outer",
-							["ia"] = "@parameter.inner",
-							["ab"] = "@block.outer",
-							["ib"] = "@block.inner",
-						},
-					},
-					move = {
-						enable = true,
-						set_jumps = true,
-						goto_next_start = { ["]f"] = "@function.outer", ["]c"] = "@class.outer" },
-						goto_next_end = { ["]F"] = "@function.outer", ["]C"] = "@class.outer" },
-						goto_previous_start = { ["[f"] = "@function.outer", ["[c"] = "@class.outer" },
-						goto_previous_end = { ["[F"] = "@function.outer", ["[C"] = "@class.outer" },
-					},
-					swap = {
-						enable = true,
-						swap_next = { ["<leader>sn"] = "@parameter.inner" },
-						swap_previous = { ["<leader>sp"] = "@parameter.inner" },
-					},
-				},
+			-- Attach treesitter highlight to every buffer whose parser exists
+			-- (blade has no legacy syntax file, so it needs this to be colored)
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function()
+					pcall(vim.treesitter.start)
+				end,
 			})
 
 			-- Treesitter context (show enclosing function name at top)
@@ -87,12 +30,6 @@ return {
 				enable = true,
 				max_lines = 3,
 				multiline_threshold = 2,
-				-- Skip markdown to avoid system tree-sitter-markdown nil-node crash
-				on_attach = function(bufnr)
-					if vim.bo[bufnr].filetype == "markdown" then
-						return false
-					end
-				end,
 			})
 		end,
 	},

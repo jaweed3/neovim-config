@@ -21,6 +21,10 @@ alias gd="gh dash"
 alias gs="git status"
 alias rst="source $HOME/.zshrc"
 
+# perpus-db: SSH tunnels to Unida Library staging/prod (for dadbod/mysql CLI).
+# masume manages its own tunnels, so this is only needed for dadbod.
+alias pdb="perpus-db"
+
 # bun
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 export BUN_INSTALL="$HOME/.bun"

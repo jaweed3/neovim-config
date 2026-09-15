@@ -10,10 +10,12 @@ return {
       wk.setup({ delay = 300 })
       wk.add({
         { "<leader>f", group = "Find" },
+        { "<leader>d", group = "Database" },
         { "<leader>l", group = "Git" },
         { "<leader>x", group = "Diagnostics" },
         { "<leader>c", group = "Code" },
-        { "<leader>s", group = "Swap" },
+        { "<leader>g", group = "Git" },
+        { "<leader>s", group = "Search/replace" },
       })
     end,
   },

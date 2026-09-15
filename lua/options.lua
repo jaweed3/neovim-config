@@ -1,19 +1,3 @@
--- vim.list polyfill for nvim-treesitter (0.11 compat)
-if not vim.list then
-  vim.list = {}
-  vim.list.unique = function(t)
-    local seen = {}
-    local result = {}
-    for _, v in ipairs(t) do
-      if not seen[v] then
-        seen[v] = true
-        table.insert(result, v)
-      end
-    end
-    return result
-  end
-end
-
 local opt = vim.opt
 
 opt.number = true

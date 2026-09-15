@@ -1,7 +1,9 @@
 -- LSP: mason, lspconfig, cmp, trouble
+-- Neovim 0.11+ native API (vim.lsp.config / vim.lsp.enable).
+-- mason-lspconfig only installs binaries; per-server settings live here.
 
 return {
-  -- MASON + LSPCONFIG
+  -- MASON (binary installer)
   {
     "williamboman/mason.nvim",
     dependencies = {
@@ -11,7 +13,10 @@ return {
     config = function()
       require("mason").setup()
 
-      local lspconfig = require("lspconfig")
+      require("mason-lspconfig").setup({
+        ensure_installed = { "lua_ls", "pyright", "rust_analyzer", "ts_ls", "intelephense", "gopls", "texlab" },
+        automatic_enable = { exclude = { "intelephense", "lua_ls", "gopls", "texlab" } },
+      })
 
       -- Safe capabilities — loads cmp if available, else uses LSP defaults
       local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -20,41 +25,68 @@ return {
         capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
       end
 
-      require("mason-lspconfig").setup({
-        ensure_installed = { "lua_ls", "pyright", "rust_analyzer", "ts_ls", "intelephense" },
-        handlers = {
-          function(server_name)
-            lspconfig[server_name].setup({ capabilities = capabilities })
-          end,
-          ["intelephense"] = function()
-            lspconfig.intelephense.setup({
-              capabilities = capabilities,
-              settings = {
-                intelephense = {
-                  files = { maxSize = 5000000 },
-                  environment = { includePaths = { "vendor" } },
-                },
-              },
-            })
-          end,
-          ["lua_ls"] = function()
-            lspconfig.lua_ls.setup({
-              capabilities = capabilities,
-              settings = {
-                Lua = {
-                  runtime = { version = "LuaJIT" },
-                  diagnostics = { globals = { "vim" } },
-                  workspace = {
-                    library = vim.api.nvim_get_runtime_file("", true),
-                    checkThirdParty = false,
-                  },
-                  telemetry = { enable = false },
-                },
-              },
-            })
-          end,
+      vim.lsp.config("*", { capabilities = capabilities })
+
+      vim.lsp.config("intelephense", {
+        capabilities = capabilities,
+        settings = {
+          intelephense = {
+            files = { maxSize = 5000000 },
+            environment = { includePaths = { "vendor" } },
+          },
         },
       })
+
+      vim.lsp.config("lua_ls", {
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            runtime = { version = "LuaJIT" },
+            diagnostics = { globals = { "vim" } },
+            workspace = {
+              library = vim.api.nvim_get_runtime_file("", true),
+              checkThirdParty = false,
+            },
+            telemetry = { enable = false },
+          },
+        },
+      })
+
+      vim.lsp.config("gopls", {
+        capabilities = capabilities,
+        cmd = { vim.fn.expand("~/go/bin/gopls") },
+        settings = {
+          gopls = {
+            gofumpt = true,
+            staticcheck = true,
+            analyses = { unusedparams = true, shadow = false },
+            codelenses = { generate = true, test = true, tidy = true },
+            hints = {
+              assignVariableTypes = true,
+              compositeLiteralFields = true,
+              functionTypeParameters = true,
+            },
+          },
+        },
+      })
+
+      -- ponytail: texlab builds via tectonic on save, previews with `open`
+      vim.lsp.config("texlab", {
+        capabilities = capabilities,
+        settings = {
+          texlab = {
+            build = {
+              executable = "tectonic",
+              args = { "-X", "compile", "--synctex", "--keep-logs", "%f" },
+              onSave = true,
+              forwardSearchAfter = false,
+            },
+            forwardSearch = { executable = "open", args = { "%p" } },
+          },
+        },
+      })
+
+      vim.lsp.enable({ "intelephense", "lua_ls", "gopls", "texlab" })
     end,
   },
 
@@ -66,13 +98,17 @@ return {
       "hrsh7th/cmp-buffer",
       "hrsh7th/cmp-path",
       "L3MON4D3/LuaSnip",
+      "rafamadriz/friendly-snippets",
+      "saadparwaiz1/cmp_luasnip",
     },
     config = function()
       local cmp = require("cmp")
+      local luasnip = require("luasnip")
+      require("luasnip.loaders.from_vscode").lazy_load()
       cmp.setup({
         snippet = {
           expand = function(args)
-            require("luasnip").lsp_expand(args.body)
+            luasnip.lsp_expand(args.body)
           end,
         },
         mapping = cmp.mapping.preset.insert({
@@ -80,14 +116,30 @@ return {
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
-          ["<Tab>"] = cmp.mapping.select_next_item(),
-          ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+          ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            elseif luasnip.expand_or_jumpable() then
+              luasnip.expand_or_jump()
+            else
+              fallback()
+            end
+          end, { "i", "s" }),
+          ["<S-Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            elseif luasnip.jumpable(-1) then
+              luasnip.jump(-1)
+            else
+              fallback()
+            end
+          end, { "i", "s" }),
         }),
         sources = cmp.config.sources({
           { name = "nvim_lsp" },
+          { name = "luasnip" },
           { name = "buffer" },
           { name = "path" },
-          { name = "luasnip" },
         }),
       })
     end,
