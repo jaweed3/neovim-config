@@ -20,7 +20,7 @@ return {
           flash = true,
         },
       })
-      vim.cmd.colorscheme("catppuccin")
+      vim.cmd.colorscheme("vim")
     end,
   },
 

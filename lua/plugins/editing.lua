@@ -42,6 +42,7 @@ return {
           rust = { "rustfmt" },
           go = { "gofumpt" },
           lua = { "stylua" },
+          sql = { "sql_formatter" },
           javascript = { "prettier" },
           typescript = { "prettier" },
           json = { "prettier" },

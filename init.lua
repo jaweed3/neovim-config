@@ -17,7 +17,7 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Plugin specs from lua/plugins/*.lua
 require("lazy").setup("plugins", {
-  install = { colorscheme = { "catppuccin" } },
+  install = { colorscheme = { "vim" } },
   checker = { enabled = true },
 })
 

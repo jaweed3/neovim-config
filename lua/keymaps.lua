@@ -42,3 +42,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
     vim.highlight.on_yank({ higroup = "IncSearch", timeout = 200 })
   end,
 })
+
+-- ── SQL in string (e.g. db.Exec) ───────────────────
+-- ponytail: gofumpt never touches string contents; select SQL then format
+keymap("v", "<leader>sf", ":!sql-formatter<CR>", { desc = "Format SQL selection" })

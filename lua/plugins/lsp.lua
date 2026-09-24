@@ -15,7 +15,7 @@ return {
 
       require("mason-lspconfig").setup({
         ensure_installed = { "lua_ls", "pyright", "rust_analyzer", "ts_ls", "intelephense", "gopls", "texlab" },
-        automatic_enable = { exclude = { "intelephense", "lua_ls", "gopls", "texlab" } },
+        automatic_enable = { exclude = { "intelephense", "lua_ls", "gopls", "texlab", "jdtls" } },
       })
 
       -- Safe capabilities — loads cmp if available, else uses LSP defaults
@@ -85,8 +85,20 @@ return {
           },
         },
       })
+      -- ponytail: jdtls autodetects gradlew/mvnw, no system gradle needed
+      vim.lsp.config("jdtls", {
+        capabilities = capabilities,
+        settings = {
+          java = {
+            eclipse = { downloadSources = true },
+            maven = { downloadSources = true },
+            gradle = { downloadSources = true },
+            format = { enabled = true },
+          },
+        },
+      })
 
-      vim.lsp.enable({ "intelephense", "lua_ls", "gopls", "texlab" })
+      vim.lsp.enable({ "intelephense", "lua_ls", "gopls", "texlab", "jdtls" })
     end,
   },
 
