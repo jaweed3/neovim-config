@@ -99,6 +99,30 @@
 |--------|--------|
 | `Space + lg` | LazyGit |
 
+### Web Dev (Next/React + Laravel)
+| Tombol / Fitur | Fungsi |
+|--------|--------|
+| `div.card` + Tab | Emmet expand → `<div class="card">` (tsx, html, blade) |
+| `Space + ns` | package.json: liat versi terbaru (npm/bun) |
+| `Space + ni` | Install package baru |
+| `Space + nd` | Hapus package (di baris itu) |
+| `Space + np` | Ganti versi package (di baris itu) |
+| `Space + Ll` | Laravel: picker utama |
+| `Space + La` | Laravel: artisan command |
+| `Space + Lr` | Laravel: daftar routes |
+| `Space + Lm` | Laravel: `make:*` |
+| `Space + Lc` | Laravel: custom commands |
+| `Space + Lo` | Laravel: resources (model/controller/dll) |
+| `Space + Lt` | Laravel: code actions |
+| `Space + Lu` | Laravel: artisan hub (serve/pail/vite/logs) |
+| `Space + Lp` | Laravel: command center |
+| `Space + Lh` | Laravel: `artisan docs` popup |
+| `Space + Lf` | Laravel: view finder (blade ⇄ yang make view) |
+| `gf` (di php/blade) | Lompat ke view/route/config/env |
+
+> Auto-format pas save: tsx/jsx/js, css/scss/less/html/vue, graphql, markdown, yaml/json/json5/jsonc → prettier · jsonl → jq (compact) · toml → taplo · blade → blade-formatter · php → pint.
+> Tag auto-close + auto-rename aktif di tsx/html/blade. Tailwind & emmet completion jalan di tsx/blade/php. ESLint fix-all otomatis pas save.
+
 ### Database (dadbod + masume)
 | Tombol / Cmd | Fungsi |
 |--------|--------|

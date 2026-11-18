@@ -16,6 +16,8 @@ return {
         { "<leader>c", group = "Code" },
         { "<leader>g", group = "Git" },
         { "<leader>s", group = "Search/replace" },
+        { "<leader>L", group = "Laravel" },
+        { "<leader>n", group = "Package" },
       })
     end,
   },

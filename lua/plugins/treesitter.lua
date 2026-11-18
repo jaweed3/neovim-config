@@ -17,6 +17,22 @@ return {
 			-- gone from config.setup — highlighting is core Neovim now.
 			require("nvim-treesitter").setup()
 
+			-- parser buat web dev — tsx itu wajib (Next/React), json buat laravel.nvim,
+			-- sql buat drizzle query di tagged template, sisanya file config
+			require("nvim-treesitter").install({
+				"tsx",
+				"json",
+				"yaml",
+				"toml",
+				"sql",
+				"scss",
+				"dockerfile",
+				"bash",
+			})
+
+			-- tsconfig.json kedetect sebagai jsonc, tapi nggak ada parser jsonc — pakai json
+			vim.treesitter.language.register("json", "jsonc")
+
 			-- Attach treesitter highlight to every buffer whose parser exists
 			-- (blade has no legacy syntax file, so it needs this to be colored)
 			vim.api.nvim_create_autocmd("FileType", {

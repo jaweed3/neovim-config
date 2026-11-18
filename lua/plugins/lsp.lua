@@ -1,22 +1,19 @@
 -- LSP: mason, lspconfig, cmp, trouble
 -- Neovim 0.11+ native API (vim.lsp.config / vim.lsp.enable).
--- mason-lspconfig only installs binaries; per-server settings live here.
+-- mason cuma install binary; config per-server ada di lua/config/lsp/*.lua
+-- (auto-discover — nambah server = cukup bikin/edit file di folder itu).
 
 return {
-  -- MASON (binary installer)
+  -- MASON (binary installer) + LSP wiring
   {
     "williamboman/mason.nvim",
     dependencies = {
       "williamboman/mason-lspconfig.nvim",
       "neovim/nvim-lspconfig",
+      "b0o/schemastore.nvim", -- JSON schemas buat jsonls (package.json, tsconfig, dll)
     },
     config = function()
       require("mason").setup()
-
-      require("mason-lspconfig").setup({
-        ensure_installed = { "lua_ls", "pyright", "rust_analyzer", "ts_ls", "intelephense", "gopls", "texlab" },
-        automatic_enable = { exclude = { "intelephense", "lua_ls", "gopls", "texlab", "jdtls" } },
-      })
 
       -- Safe capabilities — loads cmp if available, else uses LSP defaults
       local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -25,80 +22,44 @@ return {
         capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
       end
 
+      -- default buat semua server; override per-server ada di lua/config/lsp/*
       vim.lsp.config("*", { capabilities = capabilities })
 
-      vim.lsp.config("intelephense", {
-        capabilities = capabilities,
-        settings = {
-          intelephense = {
-            files = { maxSize = 5000000 },
-            environment = { includePaths = { "vendor" } },
-          },
-        },
-      })
+      -- register + enable semua server di lua/config/lsp/ (satu file = satu group)
+      local lsp = require("config.lsp")
+      lsp.setup()
 
-      vim.lsp.config("lua_ls", {
-        capabilities = capabilities,
-        settings = {
-          Lua = {
-            runtime = { version = "LuaJIT" },
-            diagnostics = { globals = { "vim" } },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-              checkThirdParty = false,
-            },
-            telemetry = { enable = false },
-          },
+      require("mason-lspconfig").setup({
+        ensure_installed = {
+          "lua_ls",
+          "pyright",
+          "rust_analyzer",
+          "ts_ls",
+          "intelephense",
+          "gopls",
+          "texlab",
+          -- web (TS/JS + Laravel)
+          "cssls",
+          "jsonls",
+          "eslint",
+          "tailwindcss",
+          "emmet_language_server",
         },
+        -- server yang config-nya di lua/config/lsp/ enable-nya dihandle config.lsp
+        automatic_enable = { exclude = lsp.registered },
       })
+    end,
+  },
 
-      vim.lsp.config("gopls", {
-        capabilities = capabilities,
-        cmd = { vim.fn.expand("~/go/bin/gopls") },
-        settings = {
-          gopls = {
-            gofumpt = true,
-            staticcheck = true,
-            analyses = { unusedparams = true, shadow = false },
-            codelenses = { generate = true, test = true, tidy = true },
-            hints = {
-              assignVariableTypes = true,
-              compositeLiteralFields = true,
-              functionTypeParameters = true,
-            },
-          },
-        },
+  -- MASON TOOL INSTALLER (binary non-LSP — biar keinstall otomatis)
+  -- prettier: web, stylua: lua, blade-formatter: blade, pint: php, taplo: toml
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = { "prettier", "stylua", "blade-formatter", "pint", "taplo" },
       })
-
-      -- ponytail: texlab builds via tectonic on save, previews with `open`
-      vim.lsp.config("texlab", {
-        capabilities = capabilities,
-        settings = {
-          texlab = {
-            build = {
-              executable = "tectonic",
-              args = { "-X", "compile", "--synctex", "--keep-logs", "%f" },
-              onSave = true,
-              forwardSearchAfter = false,
-            },
-            forwardSearch = { executable = "open", args = { "%p" } },
-          },
-        },
-      })
-      -- ponytail: jdtls autodetects gradlew/mvnw, no system gradle needed
-      vim.lsp.config("jdtls", {
-        capabilities = capabilities,
-        settings = {
-          java = {
-            eclipse = { downloadSources = true },
-            maven = { downloadSources = true },
-            gradle = { downloadSources = true },
-            format = { enabled = true },
-          },
-        },
-      })
-
-      vim.lsp.enable({ "intelephense", "lua_ls", "gopls", "texlab", "jdtls" })
     end,
   },
 
@@ -149,6 +110,7 @@ return {
         }),
         sources = cmp.config.sources({
           { name = "nvim_lsp" },
+          { name = "laravel" }, -- view()/route()/env()/kolom model (aktif cuma di php/blade)
           { name = "luasnip" },
           { name = "buffer" },
           { name = "path" },

@@ -20,7 +20,13 @@ return {
           flash = true,
         },
       })
-      vim.cmd.colorscheme("vim")
+      -- Restore last-used colorscheme (persisted across restarts);
+      -- fall back to default when nothing saved yet.
+      local persisted = require("config.colorscheme")
+      persisted.setup_autocmd()
+      if not persisted.load() then
+        vim.cmd.colorscheme("vim")
+      end
     end,
   },
 
